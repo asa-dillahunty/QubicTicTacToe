@@ -6,9 +6,10 @@ This is a game of tic tac toe, but you have to get four in a row, and it's in 3D
 ## How to execute
 This must be run on a computer that has JAVA installed. I included a makefile so on some systems in the terminal one can simply type `make run`. Otherwise run
 
-`javac *.java`
-
-`java QubicBoard`
+```bash
+javac *.java
+java QubicBoard
+```
 
 
 ## How to play
