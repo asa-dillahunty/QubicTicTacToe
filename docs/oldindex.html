@@ -6,6 +6,7 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Asa Dillahunty</title>
+		<style>canvas { width: 100%; height: 100%;}</style>
 		
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 		<link rel="stylesheet" href="../stylesheets/template.css" type="text/css"/>
@@ -28,6 +29,11 @@
 		<small>Inspired by one of my <a href="https://github.com/asa-dillahunty/QubicTicTacToe">highschool coding projects.</a></small>
 		</header>
 
+		<!-- <script src="https://threejs.org/build/three.min.js"></script>
+		<script type="module" src="three.js-master/src/Three.js"></script> -->
+		<script src="scripts/three.min.js"></script>
+		<script src="scripts/OrbitControls.js"></script>
+
 		<main>
 
 		<div class="cantine">
@@ -38,6 +44,9 @@
 				<li><button type="button" onclick="startGame('watch')">Watch a Game</button></li>
 			</ul>
 		</div>
+
+		
+		<div style="width: fit-content;height: fit-content; display: block;" id='canned-goods'></div>
 
 		<div class="board" style="display: none;">
 		<table class="slice">
@@ -216,7 +225,7 @@
 			</li>
 		</ul>
 		<p>
-			There used to be a visual display of the game state created using Three.js, unfortunately it broke and I have yet to fix it. Also, single player currently has only one difficulty, and it's hard. Good luck :)
+			Currently single player has only one difficulty, and it's hard. Good luck :)
 		</p>
 		</section>
 		</main>
@@ -236,6 +245,6 @@
 		</footer>
 		</div>
 	</body>
-	<script type='text/javascript' src="scripts/interface-noThree.js.js"></script>
+	<script type='text/javascript' src="scripts/interface.js"></script>
 	<script src="../scripts/nav.js"></script>
 </html>
