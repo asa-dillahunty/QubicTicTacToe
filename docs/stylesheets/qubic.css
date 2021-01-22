@@ -45,7 +45,7 @@ td:hover {
     background-color: green !important;
 }
 
-.cantine {
+#cantine {
     width: max-content;
     text-align: center;
     margin: auto;
@@ -53,13 +53,13 @@ td:hover {
     display: block;
 }
 
-.cantine ul {
+#cantine ul {
     list-style-type: none;
     margin: 0;
     padding: 0;
 }
 
-.cantine ul li button {
+#cantine ul li button {
     width: 100%;
     font-size: 2rem;
     padding: 1rem;
@@ -69,4 +69,12 @@ td:hover {
 
 div.game-menu {
     display: none;
+}
+
+input[type=text] {
+    border: solid 5px #667a94;
+    font-family: 'Courier New', Courier, monospace;
+    /* border-bottom-color: blue; */
+    font-size: 30pt;
+    width: 60pt;
 }
