@@ -16,6 +16,7 @@ table, td {
 
 td {
     cursor:pointer;
+    padding: 5px 7px 5px 7px;
 }
 
 td:hover {
@@ -35,17 +36,38 @@ td:hover {
 
 .X {
     background-color: chocolate !important;
+    /* animation: littleFlashyFlash 1s linear 0s forwards; */
+}
+
+.X::before {
+    content: "X";
 }
 
 .O {
     background-color: burlywood !important;
+    /* animation: littleFlashyFlash 1s linear 0s forwards; */
+}
+
+.O::before {
+    content: "O";
+}
+
+.emptyCell::before {
+    content: "\00a0";
+}
+
+@keyframes littleFlashyFlash {
+    0% {opacity: 0;}
+    33% {opacity: 1;}
+    67% {opacity: 0;}
+    100% {opacity: 1;}
 }
 
 .winning-move {
     background-color: green !important;
 }
 
-#cantine {
+#canteen {
     width: max-content;
     text-align: center;
     margin: auto;
@@ -53,22 +75,36 @@ td:hover {
     display: block;
 }
 
-#cantine ul {
+#canteen ul {
     list-style-type: none;
     margin: 0;
     padding: 0;
 }
 
-#cantine ul li button {
+#canteen ul li button {
     width: 100%;
     font-size: 2rem;
     padding: 1rem;
     border-radius: 2rem;
     margin: .5rem;
 }
-
 div.game-menu {
     display: none;
+}
+
+#GameDetails {
+    margin-top: 5%;
+}
+
+#userDetails input[type=text] {
+    font-size: 16pt;
+    width: 160pt;
+}
+
+#opponentName {
+    font-size: 16pt;
+    width: 160pt;
+    border: none;
 }
 
 input[type=text] {
@@ -77,4 +113,7 @@ input[type=text] {
     /* border-bottom-color: blue; */
     font-size: 30pt;
     width: 60pt;
+
+    margin-top: 10px;
+    margin-bottom: 10px;
 }

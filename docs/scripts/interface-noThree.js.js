@@ -1,10 +1,18 @@
 var game_status = 'not started';
+var game_type;
 var gameBoard;
 var turn;
 var turnCount;
 var players;
 var bot = null;
 var interval = null;
+var onlineGameDataStream;
+var onlineGameData;
+var userName;
+document.getElementById('userName').addEventListener('change', function() {
+	userName = document.getElementById('userName').value;
+});
+var opponentName = null;
 
 var button_background = '#DCDCAA';
 var slice_colors = ['#FFFFFF','#CCCCFF','#CCFFCC','#FFCCCC'];
@@ -29,8 +37,7 @@ function boardInit() {
 		for (var j=0;j<4;j++) {
 			for (var k=0;k<4;k++) {
 				var cell = document.getElementsByClassName("slice")[i].children[4].children[j].children[k];
-				cell.innerHTML='&nbsp;';
-				cell.classList='';
+				cell.classList='emptyCell';
 				cell.style.backgroundColor = slice_colors[i];
 			}
 		}
@@ -95,7 +102,18 @@ function validMove(i,j,k) {
 	else return false;
 }
 
-function sendMove(i,j,k) {
+function sendMove(i,j,k, opponentMove=false) {
+	if (onlineGameData && !opponentMove) {
+		onlineGameData.lastMove = {
+			player:userName,
+			i:i,
+			j:j,
+			k:k,
+		}
+		sendDataStream();
+		makeNotClickable();
+	}
+
 	markCell(i,j,k,players[turn]);
 	gameBoard[i][j][k] = players[turn];
 
@@ -107,7 +125,7 @@ function sendMove(i,j,k) {
 
 		markWinner();
 		console.log(players[turn] + ' wins!')
-		game_status = 'finshed';
+		game_status = 'finished';
 		
 		setTimeout(() => {
 			if (confirm(players[turn] + ' wins!\nPlay again?')) {
@@ -126,7 +144,7 @@ function sendMove(i,j,k) {
 		if (interval != null) clearInterval(interval);
 
 		console.log('draw')
-		game_status = 'finshed';
+		game_status = 'finished';
 		
 		setTimeout(() => { 
 			if (confirm('It\'s a draw!\nPlay again?')) {
@@ -141,9 +159,7 @@ function sendMove(i,j,k) {
 
 function markCell(i,j,k,mark) {
 	var cell = document.getElementsByClassName("slice")[i].children[4].children[j].children[k];
-
-	cell.innerHTML = mark;
-	cell.classList += mark;
+	cell.classList = mark;
 }
 
 function markWinner() {
@@ -152,24 +168,24 @@ function markWinner() {
 			for (var k=0;k<4;k++)
 				for(var dx=-1;dx<=1;dx++)
 					for(var dy=-1;dy<=1;dy++)
-						for(var dz=-1;dz<=1;dz++)
-						{
+						for(var dz=-1;dz<=1;dz++) {
 							if (dx==0 && dy==0 && dz==0) continue;
 							if (i+dx*3 > 3 || i+dx*3 < 0) continue;
 							if (j+dy*3 > 3 || j+dy*3 < 0) continue;
 							if (k+dz*3 > 3 || k+dz*3 < 0) continue;
-								if(gameBoard[i][j][k]!=' ' && 
-									gameBoard[i][j][k]==gameBoard[i+dx][j+dy][k+dz] && 
-									gameBoard[i][j][k]==gameBoard[i+2*dx][j+2*dy][k+2*dz] && 
-									gameBoard[i][j][k]==gameBoard[i+3*dx][j+3*dy][k+3*dz]) {
 
-										document.getElementsByClassName("slice")[i].children[4].children[j].children[k].classList+=' winning-move';
-										document.getElementsByClassName("slice")[i+dx].children[4].children[j+dy].children[k+dz].classList+=' winning-move';
-										document.getElementsByClassName("slice")[i+dx*2].children[4].children[j+dy*2].children[k+dz*2].classList+=' winning-move';
-										document.getElementsByClassName("slice")[i+dx*3].children[4].children[j+dy*3].children[k+dz*3].classList+=' winning-move';
+							if(gameBoard[i][j][k]!=' ' && 
+								gameBoard[i][j][k]==gameBoard[i+dx][j+dy][k+dz] && 
+								gameBoard[i][j][k]==gameBoard[i+2*dx][j+2*dy][k+2*dz] && 
+								gameBoard[i][j][k]==gameBoard[i+3*dx][j+3*dy][k+3*dz]) {
 
-										return gameBoard[i][j][k];
-									}
+									document.getElementsByClassName("slice")[i].children[4].children[j].children[k].classList+=' winning-move';
+									document.getElementsByClassName("slice")[i+dx].children[4].children[j+dy].children[k+dz].classList+=' winning-move';
+									document.getElementsByClassName("slice")[i+dx*2].children[4].children[j+dy*2].children[k+dz*2].classList+=' winning-move';
+									document.getElementsByClassName("slice")[i+dx*3].children[4].children[j+dy*3].children[k+dz*3].classList+=' winning-move';
+
+									return gameBoard[i][j][k];
+								}
 
 						}
 	return 0;
@@ -203,39 +219,98 @@ function startGame(type) {
 	// if bot alive, kill it >:)
 	if (interval != null) clearInterval(interval);
 
+	makeNotClickable();
+
 	// hide buttons
-	document.getElementsByClassName('cantine')[0].style.display='none';
-	document.getElementsByClassName('how-to-play')[0].style.display='none';
+	document.getElementById('canteen').style.display='none';
+	// document.getElementsByClassName('how-to-play')[0].style.display='none';
 	document.getElementsByClassName('game-menu')[0].style.display='inherit';
+	document.getElementsByClassName("board")[0].style.display = "inline-flex";
 
 	game_status = 'in progress';
 	gameBoard = boardInit();
 	players = ['X','O'];
 	turn = 0;
 	turnCount = 0;
-	makeClickable();
 
-	for (var btn = 0;btn<4;btn++) {
+	var menuButtonList = document.getElementsByClassName('game-menu')[0].children;
+	for (var btn = 0;btn<menuButtonList.length;btn++) {
 		document.getElementsByClassName('game-menu')[0].children[btn].style.backgroundColor = '';
 	}
 	
 	if (type == 'single') {
+		makeClickable();
 		document.getElementsByClassName('game-menu')[0].children[0].style.backgroundColor = button_background;
-		document.getElementsByClassName("board")[0].style.display = "inline-flex";
 		interval = null;
 		bot = newBot('point');
 	}
 	else if (type == 'two') {
+		makeClickable();
 		document.getElementsByClassName('game-menu')[0].children[1].style.backgroundColor = button_background;
-		document.getElementsByClassName("board")[0].style.display = "inline-flex";
 		interval = null;
 		bot = null;
 	}
+	else if (type == 'online') {
+		// Join or Host?
+		document.getElementsByClassName('game-menu')[0].style.display='none';
+		document.getElementById('onlineOptions').style.display = 'inherit';userDetails
+		document.getElementById('userDetails').style.display = 'inherit';
+		// document.getElementById('GameDetails').style.display = 'inherit';
+	}
 	else if (type == 'watch') {
-		document.getElementsByClassName('game-menu')[0].children[3].style.backgroundColor = button_background;
-		makeNotClickable();
+		document.getElementsByClassName('game-menu')[0].children[4].style.backgroundColor = button_background;
 		bot = newBot('point');
 		watchGame();
+	}
+}
+
+function onlineHandler(selection) {
+	document.getElementById('userDetails').style.display = 'none';
+	switch (selection) {
+		case 'join':
+			// Make sure user details is finished
+
+			// Check if code is entered
+			var gameCode = document.getElementById('gameCode').value;
+			if (gameCode.length == 3) {
+				dataStreamInit(gameCode);
+			} else {
+				document.getElementById('GameDetails').style.display = 'inherit';
+			}
+			break;
+		case 'host':
+			
+			var gameCode = generateGameCode();
+			dataStreamInit(gameCode);
+
+			onlineGameData = {
+				player1: {
+					name:userName,
+					color:document.getElementById('userColor').value
+				},
+				player2: null,
+				gameID: gameCode,
+				lastMove: null
+			};
+
+			document.getElementById('gameCode').disabled = 'true';
+			document.getElementById('gameCode').value = gameCode
+			document.getElementById('GameDetails').style.display = 'inherit';
+
+			sendDataStream();
+
+
+			break;
+		case 'cancel':
+			document.getElementById('canteen').style.display='inherit';
+			document.getElementsByClassName('game-menu')[0].style.display='none';
+			document.getElementsByClassName("board")[0].style.display = "none";
+			document.getElementById('GameDetails').style.display = 'none';
+			document.getElementById('onlineOptions').style.display = 'none';
+			break;
+		default:
+			// default will also cancel because something went wrong
+
 	}
 }
 
@@ -246,6 +321,82 @@ function watchGame() {
 		if (move != 0 && validMove(move[0],move[1],move[2])) 
 			sendMove(move[0],move[1],move[2]);
 	}, 1000);
+}
+
+/* FIREBASE Stuff */
+function dataStreamInit(gameCode) {
+
+	var database=firebase.database();
+
+	onlineGameDataStream = database.ref(`games/${gameCode}`);
+	onlineGameDataStream.on('value',(snapshot) => {
+		const data = snapshot.val();
+		onlineGameData = data;
+		console.log("Received Data");
+		dataStreamHandler();		
+	});
+}
+
+function sendDataStream() {
+	onlineGameDataStream.set(onlineGameData);
+}
+
+function dataStreamHandler() {
+	if (opponentName == null && onlineGameData.player1 && onlineGameData.player2) {
+		// var database=firebase.database();
+		// onlineGameDataStream = database.ref(`games/${onlineGameData.gameID}/lastMove`);
+		// onlineGameDataStream.on('value',(snapshot) => {
+		// 	const data = snapshot.val();
+		// 	onlineGameData.lastMove = data;
+		// 	console.log("Received Data");
+		// 	dataStreamHandler();		
+		// });
+
+		if (onlineGameData.player1.name == userName) {
+			opponentName = onlineGameData.player2.name;
+			document.getElementById('opponentName').value = opponentName;
+			document.getElementById('opponentName').style.backgroundColor = onlineGameData.player2.color;
+		} else {
+			opponentName = onlineGameData.player1.name;
+			document.getElementById('opponentName').value = opponentName;
+			document.getElementById('opponentName').style.backgroundColor = onlineGameData.player1.color;
+		}
+	}
+
+	if (onlineGameData && onlineGameData.player1.name != userName && onlineGameData.player2 == null) {
+		onlineGameData.player2 = {
+			name:userName,
+			color:document.getElementById('userColor').value
+		}
+		sendDataStream();
+		// player2 has joined the chat, and player two is you
+		// player2 goes first
+		makeClickable();
+	}
+
+	if (onlineGameData == null ||
+		onlineGameData.lastMove == null ||
+		onlineGameData.lastMove.player == userName) return;
+
+	
+
+
+	sendMove(onlineGameData.lastMove.i,onlineGameData.lastMove.j,onlineGameData.lastMove.k,true);
+	makeClickable();
+}
+
+function generateGameCode() {
+	const letterA = 65;
+	var gameCode = '';
+	var letterShift;
+	// console.log(String.fromCharCode(letterA + letterShift));
+
+	for (var i=0;i<3;i++) {
+		letterShift = Math.floor(Math.random()*26);
+		gameCode += String.fromCharCode(letterA + letterShift);
+	}
+
+	return gameCode;
 }
 
 // Bot Code //
