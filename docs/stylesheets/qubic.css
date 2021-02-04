@@ -94,17 +94,17 @@ div.game-menu {
 
 #GameDetails {
     margin-top: 5%;
+    text-align: left;
 }
 
-#userDetails input[type=text] {
-    font-size: 16pt;
-    width: 160pt;
-}
-
-#opponentName {
+#opponentName, #userName {
     font-size: 16pt;
     width: 160pt;
     border: none;
+    border-radius: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    text-transform: none;
 }
 
 input[type=text] {
@@ -116,4 +116,7 @@ input[type=text] {
 
     margin-top: 10px;
     margin-bottom: 10px;
+
+    text-align: center;
+    text-transform:uppercase;
 }

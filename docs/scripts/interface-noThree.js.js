@@ -8,11 +8,32 @@ var bot = null;
 var interval = null;
 var onlineGameDataStream;
 var onlineGameData;
-var userName;
+var userData = {playerOne:null,name:null,color:null};
 document.getElementById('userName').addEventListener('change', function() {
-	userName = document.getElementById('userName').value;
+	userData.name = document.getElementById('userName').value;
+});
+document.getElementById('userColor').addEventListener('change', function() {
+	userData.color = document.getElementById('userColor').value;
+	document.getElementById('userName').style.backgroundColor = userData.color;
+
+	var colorRGB = hexToRgb(userData.color);
+	if (contrast([colorRGB.r,colorRGB.g,colorRGB.b],[0,0,0]) 
+		> contrast([colorRGB.r,colorRGB.g,colorRGB.b],[255,255,255])) {
+			document.getElementById('userName').style.color = '#000000';
+	} else document.getElementById('userName').style.color = '#ffffff';
+
+	// console.log(contrast([colorRGB.r,colorRGB.g,colorRGB.b],[0,0,0]));
+	// console.log(contrast([colorRGB.r,colorRGB.g,colorRGB.b],[255,255,255]));
+
+	// if (onlineGameData)
+	// 	if (userData.playerOne) onlineGameData.player1.color = userData.color;
+	// 	else onlineGameData.player2.color = userData.color;
 });
 var opponentName = null;
+
+// document.addEventListener('keydown', function(event) {
+// 	console.log(onlineGameData);
+// });
 
 var button_background = '#DCDCAA';
 var slice_colors = ['#FFFFFF','#CCCCFF','#CCFFCC','#FFCCCC'];
@@ -22,11 +43,11 @@ function howToPlay() {
 	if (elem.style.display=='none') {
 		elem.style.display = 'inherit';
 		// gets the button and lets you know it's been selected
-		document.getElementsByClassName('game-menu')[0].children[2].style.backgroundColor = button_background;
+		document.getElementsByClassName('game-menu')[0].children[3].style.backgroundColor = button_background;
 	}
 	else {
 		elem.style.display = 'none';
-		document.getElementsByClassName('game-menu')[0].children[2].style.backgroundColor = '';
+		document.getElementsByClassName('game-menu')[0].children[3].style.backgroundColor = '';
 	}
 	
 }
@@ -105,7 +126,7 @@ function validMove(i,j,k) {
 function sendMove(i,j,k, opponentMove=false) {
 	if (onlineGameData && !opponentMove) {
 		onlineGameData.lastMove = {
-			player:userName,
+			player:userData.name,
 			i:i,
 			j:j,
 			k:k,
@@ -130,9 +151,7 @@ function sendMove(i,j,k, opponentMove=false) {
 		setTimeout(() => {
 			if (confirm(players[turn] + ' wins!\nPlay again?')) {
 				// play again
-				if (interval != null) startGame('watch');
-				else if (bot != null) startGame('single');
-				else startGame('two');
+				startGame(game_type);
 			}
 		}, 1000);
 		return;
@@ -228,6 +247,7 @@ function startGame(type) {
 	document.getElementsByClassName("board")[0].style.display = "inline-flex";
 
 	game_status = 'in progress';
+	game_type = type;
 	gameBoard = boardInit();
 	players = ['X','O'];
 	turn = 0;
@@ -252,9 +272,18 @@ function startGame(type) {
 	}
 	else if (type == 'online') {
 		// Join or Host?
+
+		// Firefox remembers game code. Not good for business
+		document.getElementById('gameCode').value = '';
+		opponentName = null;
+		document.getElementById('opponentName').value = '';
+		onlineGameData = null;
+		onlineGameDataStream = null;
+		userData.name = document.getElementById('userName').value;
+
 		document.getElementsByClassName('game-menu')[0].style.display='none';
-		document.getElementById('onlineOptions').style.display = 'inherit';userDetails
-		document.getElementById('userDetails').style.display = 'inherit';
+		document.getElementById('onlineOptions').style.display = 'inherit';
+		document.getElementById('GameDetails').style.display = 'inherit';
 		// document.getElementById('GameDetails').style.display = 'inherit';
 	}
 	else if (type == 'watch') {
@@ -265,7 +294,6 @@ function startGame(type) {
 }
 
 function onlineHandler(selection) {
-	document.getElementById('userDetails').style.display = 'none';
 	switch (selection) {
 		case 'join':
 			// Make sure user details is finished
@@ -273,6 +301,7 @@ function onlineHandler(selection) {
 			// Check if code is entered
 			var gameCode = document.getElementById('gameCode').value;
 			if (gameCode.length == 3) {
+				document.getElementById('gameCode').disabled = 'true';
 				dataStreamInit(gameCode);
 			} else {
 				document.getElementById('GameDetails').style.display = 'inherit';
@@ -285,7 +314,7 @@ function onlineHandler(selection) {
 
 			onlineGameData = {
 				player1: {
-					name:userName,
+					name:userData.name,
 					color:document.getElementById('userColor').value
 				},
 				player2: null,
@@ -326,6 +355,7 @@ function watchGame() {
 /* FIREBASE Stuff */
 function dataStreamInit(gameCode) {
 
+	gameCode = gameCode.toUpperCase();
 	var database=firebase.database();
 
 	onlineGameDataStream = database.ref(`games/${gameCode}`);
@@ -352,10 +382,17 @@ function dataStreamHandler() {
 		// 	dataStreamHandler();		
 		// });
 
-		if (onlineGameData.player1.name == userName) {
+		if (onlineGameData.player1.name == userData.name) {
 			opponentName = onlineGameData.player2.name;
 			document.getElementById('opponentName').value = opponentName;
 			document.getElementById('opponentName').style.backgroundColor = onlineGameData.player2.color;
+
+			var colorRGB = hexToRgb(onlineGameData.player2.color);
+			if (contrast([colorRGB.r,colorRGB.g,colorRGB.b],[0,0,0]) 
+				> contrast([colorRGB.r,colorRGB.g,colorRGB.b],[255,255,255])) {
+					document.getElementById('userName').style.color = '#000000';
+			} else document.getElementById('userName').style.color = '#ffffff';
+
 		} else {
 			opponentName = onlineGameData.player1.name;
 			document.getElementById('opponentName').value = opponentName;
@@ -363,9 +400,9 @@ function dataStreamHandler() {
 		}
 	}
 
-	if (onlineGameData && onlineGameData.player1.name != userName && onlineGameData.player2 == null) {
+	if (onlineGameData && onlineGameData.player1.name != userData.name && onlineGameData.player2 == null) {
 		onlineGameData.player2 = {
-			name:userName,
+			name:userData.name,
 			color:document.getElementById('userColor').value
 		}
 		sendDataStream();
@@ -376,7 +413,7 @@ function dataStreamHandler() {
 
 	if (onlineGameData == null ||
 		onlineGameData.lastMove == null ||
-		onlineGameData.lastMove.player == userName) return;
+		onlineGameData.lastMove.player == userData.name) return;
 
 	
 
@@ -397,6 +434,42 @@ function generateGameCode() {
 	}
 
 	return gameCode;
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * The functions below (luminance and contrast) were posted online at
+ * https://stackoverflow.com/questions/9733288/how-to-programmatically-calculate-the-contrast-ratio-between-two-colors
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+function luminance(r, g, b) {
+	var a = [r, g, b].map(function (v) {
+		v /= 255;
+		return v <= 0.03928
+			? v / 12.92
+			: Math.pow( (v + 0.055) / 1.055, 2.4 );
+	});
+	return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+}
+function contrast(rgb1, rgb2) {
+	var lum1 = luminance(rgb1[0], rgb1[1], rgb1[2]);
+	var lum2 = luminance(rgb2[0], rgb2[1], rgb2[2]);
+	var brightest = Math.max(lum1, lum2);
+	var darkest = Math.min(lum1, lum2);
+	return (brightest + 0.05) / (darkest + 0.05);
+}
+// minimal recommended contrast ratio is 4.5, or 3 for larger font-sizes
+
+
+/* * * * * * * * * * * * * * * * * * * * * * *
+ * The functions below (hexToRgb) were posted online at
+ * https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+ * * * * * * * * * * * * * * * * * * * * * * */
+function hexToRgb(hex) {
+var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+	return result ? {
+		r: parseInt(result[1], 16),
+		g: parseInt(result[2], 16),
+		b: parseInt(result[3], 16)
+	} : null;
 }
 
 // Bot Code //
