@@ -8,7 +8,7 @@ var bot = null;
 var interval = null;
 var onlineGameDataStream;
 var onlineGameData;
-var userData = {playerOne:null,name:null,color:null};
+var userData = {host:null,name:null,color:null};
 document.getElementById('userName').addEventListener('change', function() {
 	userData.name = document.getElementById('userName').value;
 });
@@ -16,18 +16,7 @@ document.getElementById('userColor').addEventListener('change', function() {
 	userData.color = document.getElementById('userColor').value;
 	document.getElementById('userName').style.backgroundColor = userData.color;
 
-	var colorRGB = hexToRgb(userData.color);
-	if (contrast([colorRGB.r,colorRGB.g,colorRGB.b],[0,0,0]) 
-		> contrast([colorRGB.r,colorRGB.g,colorRGB.b],[255,255,255])) {
-			document.getElementById('userName').style.color = '#000000';
-	} else document.getElementById('userName').style.color = '#ffffff';
-
-	// console.log(contrast([colorRGB.r,colorRGB.g,colorRGB.b],[0,0,0]));
-	// console.log(contrast([colorRGB.r,colorRGB.g,colorRGB.b],[255,255,255]));
-
-	// if (onlineGameData)
-	// 	if (userData.playerOne) onlineGameData.player1.color = userData.color;
-	// 	else onlineGameData.player2.color = userData.color;
+	whiteOrBlack('userName',hexToRgb(userData.color));
 });
 var opponentName = null;
 
@@ -84,7 +73,7 @@ function makeClickable() {
 	for (var i=0;i<4;i++)
 		for (var j=0;j<4;j++)
 			for (var k=0;k<4;k++) {
-				var cell = document.getElementsByClassName("slice")[i].children[4].children[j].children[k];
+				var cell = slices[i].children[4].children[j].children[k];
 				cell.setAttribute("onClick","clickedSquare("+i+','+j+','+k+");")
 			}
 }
@@ -95,7 +84,7 @@ function makeNotClickable() {
 	for (var i=0;i<4;i++)
 		for (var j=0;j<4;j++)
 			for (var k=0;k<4;k++) {
-				var cell = document.getElementsByClassName("slice")[i].children[4].children[j].children[k];
+				var cell = slices[i].children[4].children[j].children[k];
 				cell.setAttribute("onClick","")
 			}
 }
@@ -124,6 +113,9 @@ function validMove(i,j,k) {
 }
 
 function sendMove(i,j,k, opponentMove=false) {
+	markCell(i,j,k,players[turn]);
+	gameBoard[i][j][k] = players[turn];
+
 	if (onlineGameData && !opponentMove) {
 		onlineGameData.lastMove = {
 			player:userData.name,
@@ -131,13 +123,13 @@ function sendMove(i,j,k, opponentMove=false) {
 			j:j,
 			k:k,
 		}
-		sendDataStream();
+		if (getWinner() != 0) {
+			if (userData.host) onlineGameData.player1.ready = false;
+			else onlineGameData.player2.ready = false;
+		}
 		makeNotClickable();
+		sendDataStream();
 	}
-
-	markCell(i,j,k,players[turn]);
-	gameBoard[i][j][k] = players[turn];
-
 
 	if (getWinner() != 0) {
 		// handle winner
@@ -149,13 +141,11 @@ function sendMove(i,j,k, opponentMove=false) {
 		game_status = 'finished';
 		
 		setTimeout(() => {
-			if (confirm(players[turn] + ' wins!\nPlay again?')) {
-				// play again
-				startGame(game_type);
-			}
+			showModal(`${players[turn]} wins!\nPlay again?`);
 		}, 1000);
 		return;
 	}
+	
 	turn = (turn+1)%2;
 	turnCount++;
 
@@ -165,13 +155,12 @@ function sendMove(i,j,k, opponentMove=false) {
 		console.log('draw')
 		game_status = 'finished';
 		
-		setTimeout(() => { 
-			if (confirm('It\'s a draw!\nPlay again?')) {
-				// play again
-				if (interval !=null) startGame('watch');
-				else if (bot != null) startGame('single');
-				else startGame('two');
-			}
+		setTimeout(() => {
+			showModal('It\'s a draw!\nPlay again?');
+			// if (confirm('It\'s a draw!\nPlay again?')) {
+			// 	// play again
+			// 	startGame(game_type);
+			// }
 		}, 1000);
 	}
 }
@@ -272,7 +261,19 @@ function startGame(type) {
 	}
 	else if (type == 'online') {
 		// Join or Host?
+		if (onlineGameData) {
+			// game is currently live
+			document.getElementsByClassName('game-menu')[0].style.display='none';
+			document.getElementById('onlineOptions').style.display = 'inherit';
+			document.getElementById('GameDetails').style.display = 'inherit';
 
+			// Tell the other user I'm ready to battle to the bitter end.. again
+			if (userData.host) onlineGameData.player1.ready = true;
+			else onlineGameData.player2.ready = true;
+			onlineGameData.lastMove = null;
+			sendDataStream();
+			return;
+		}
 		// Firefox remembers game code. Not good for business
 		document.getElementById('gameCode').value = '';
 		opponentName = null;
@@ -280,6 +281,9 @@ function startGame(type) {
 		onlineGameData = null;
 		onlineGameDataStream = null;
 		userData.name = document.getElementById('userName').value;
+		userData.color = document.getElementById('userColor').value;
+		document.getElementById('userName').style.backgroundColor = userData.color;
+		whiteOrBlack('userName',hexToRgb(userData.color));
 
 		document.getElementsByClassName('game-menu')[0].style.display='none';
 		document.getElementById('onlineOptions').style.display = 'inherit';
@@ -301,29 +305,40 @@ function onlineHandler(selection) {
 			// Check if code is entered
 			var gameCode = document.getElementById('gameCode').value;
 			if (gameCode.length == 3) {
-				document.getElementById('gameCode').disabled = 'true';
+				if (document.getElementById('userName').value.length < 1) {
+					alert('You must enter a name');
+					break;
+				}
+				setAbles(true);
 				dataStreamInit(gameCode);
 			} else {
-				document.getElementById('GameDetails').style.display = 'inherit';
+				alert('You must enter the game code');
 			}
+			userData.host = false;
 			break;
 		case 'host':
+			if (document.getElementById('userName').value.length < 1) {
+				alert('You must enter a name');
+				break;
+			}
 			
 			var gameCode = generateGameCode();
 			dataStreamInit(gameCode);
+			userData.host = true;
 
 			onlineGameData = {
 				player1: {
 					name:userData.name,
-					color:document.getElementById('userColor').value
+					color:document.getElementById('userColor').value,
+					ready:true
 				},
 				player2: null,
 				gameID: gameCode,
 				lastMove: null
 			};
 
-			document.getElementById('gameCode').disabled = 'true';
 			document.getElementById('gameCode').value = gameCode
+			setAbles(true);
 			document.getElementById('GameDetails').style.display = 'inherit';
 
 			sendDataStream();
@@ -335,12 +350,27 @@ function onlineHandler(selection) {
 			document.getElementsByClassName('game-menu')[0].style.display='none';
 			document.getElementsByClassName("board")[0].style.display = "none";
 			document.getElementById('GameDetails').style.display = 'none';
+			document.getElementById('gameCode').disabled = false;
 			document.getElementById('onlineOptions').style.display = 'none';
+			killOnline();
 			break;
 		default:
 			// default will also cancel because something went wrong
 
 	}
+}
+
+function setAbles(isDisabled) {
+	document.getElementById('gameCode').disabled = isDisabled;
+	document.getElementById('userName').disabled = isDisabled;
+	document.getElementById('userColor').disabled = isDisabled;
+}
+
+function whiteOrBlack(elemID,colorRGB) {
+	if (contrast([colorRGB.r,colorRGB.g,colorRGB.b],[0,0,0]) 
+		< contrast([colorRGB.r,colorRGB.g,colorRGB.b],[255,255,255])) {
+			document.getElementById(elemID).style.color = '#ffffff';
+	} else document.getElementById(elemID).style.color = '#000000';
 }
 
 function watchGame() {
@@ -359,10 +389,17 @@ function dataStreamInit(gameCode) {
 	var database=firebase.database();
 
 	onlineGameDataStream = database.ref(`games/${gameCode}`);
+
 	onlineGameDataStream.on('value',(snapshot) => {
 		const data = snapshot.val();
+		if (data == null) {
+			alert('Connection not found');
+			setAbles(false);
+			startGame(game_type);
+			return;
+		}
 		onlineGameData = data;
-		console.log("Received Data");
+		// console.log("Received Data");
 		dataStreamHandler();		
 	});
 }
@@ -372,38 +409,56 @@ function sendDataStream() {
 }
 
 function dataStreamHandler() {
-	if (opponentName == null && onlineGameData.player1 && onlineGameData.player2) {
-		// var database=firebase.database();
-		// onlineGameDataStream = database.ref(`games/${onlineGameData.gameID}/lastMove`);
-		// onlineGameDataStream.on('value',(snapshot) => {
-		// 	const data = snapshot.val();
-		// 	onlineGameData.lastMove = data;
-		// 	console.log("Received Data");
-		// 	dataStreamHandler();		
-		// });
+	if (onlineGameData.player1 && onlineGameData.player2) {
+		var myReady = document.getElementById('opponentReady');
+		// set the  readies
+		if  (userData.host) {
+			if (onlineGameData.player2.ready) {
+				myReady.classList = 'ready';
+				myReady.value = 'Ready';
+			} else {
+				myReady.classList = '';
+				myReady.value = 'Not Ready';
+			}
+		} else {
+			if (onlineGameData.player2.ready) {
+				myReady.classList = 'ready';
+				myReady.value = 'Ready';
+			} else {
+				myReady.classList = '';
+				myReady.value = 'Not Ready';
+			}
+		}
 
-		if (onlineGameData.player1.name == userData.name) {
+		if (!onlineGameData.player1.ready || !onlineGameData.player2.ready) makeNotClickable();
+		else if (onlineGameData.lastMove && onlineGameData.lastMove.player != userData.name) makeClickable();
+	}
+
+	if (opponentName == null && onlineGameData.player1 && onlineGameData.player2) {
+
+		if (userData.host) {
 			opponentName = onlineGameData.player2.name;
 			document.getElementById('opponentName').value = opponentName;
 			document.getElementById('opponentName').style.backgroundColor = onlineGameData.player2.color;
-
-			var colorRGB = hexToRgb(onlineGameData.player2.color);
-			if (contrast([colorRGB.r,colorRGB.g,colorRGB.b],[0,0,0]) 
-				> contrast([colorRGB.r,colorRGB.g,colorRGB.b],[255,255,255])) {
-					document.getElementById('userName').style.color = '#000000';
-			} else document.getElementById('userName').style.color = '#ffffff';
-
+			whiteOrBlack('opponentName',hexToRgb(onlineGameData.player2.color));
 		} else {
 			opponentName = onlineGameData.player1.name;
 			document.getElementById('opponentName').value = opponentName;
 			document.getElementById('opponentName').style.backgroundColor = onlineGameData.player1.color;
+			whiteOrBlack('opponentName',hexToRgb(onlineGameData.player1.color));
 		}
 	}
 
-	if (onlineGameData && onlineGameData.player1.name != userData.name && onlineGameData.player2 == null) {
+	if (onlineGameData && !userData.host && onlineGameData.player2 == null) {
+		// If you used the same name, just add a 2
+		if (onlineGameData.player1.name == userData.name) {
+			userData.name += '2';
+			document.getElementById('userName').value = userData.name;
+		}
 		onlineGameData.player2 = {
 			name:userData.name,
-			color:document.getElementById('userColor').value
+			color:document.getElementById('userColor').value,
+			ready:true
 		}
 		sendDataStream();
 		// player2 has joined the chat, and player two is you
@@ -411,22 +466,50 @@ function dataStreamHandler() {
 		makeClickable();
 	}
 
+	if (onlineGameData && onlineGameData.lastMove == null) {
+		if (userData.host && 
+			onlineGameData.player1 &&
+			onlineGameData.player2 &&
+			onlineGameData.player1.ready &&
+			onlineGameData.player2.ready) {
+				makeClickable();
+			}
+	}
+
 	if (onlineGameData == null ||
 		onlineGameData.lastMove == null ||
 		onlineGameData.lastMove.player == userData.name) return;
 
+
+	// if (userData.host)
 	
 
+	if (onlineGameData.lastMove) {
+		sendMove(onlineGameData.lastMove.i,onlineGameData.lastMove.j,onlineGameData.lastMove.k,true);
+		makeClickable();
+	}
+}
 
-	sendMove(onlineGameData.lastMove.i,onlineGameData.lastMove.j,onlineGameData.lastMove.k,true);
-	makeClickable();
+function killOnline() {
+	// let them know we are leaving
+	if (onlineGameDataStream && onlineGameData) {
+		if (userData && userData.host && onlineGameData.player1) {
+			onlineGameData.player1.ready = false;
+			sendDataStream();
+		} else if (userData && !userData.host && onlineGameData.player2) {
+			onlineGameData.player2.ready = false;
+			sendDataStream();
+		}
+	}
+	if (onlineGameDataStream) onlineGameDataStream.off();
+	onlineGameData = null;
+	onlineGameDataStream = null;
 }
 
 function generateGameCode() {
 	const letterA = 65;
 	var gameCode = '';
 	var letterShift;
-	// console.log(String.fromCharCode(letterA + letterShift));
 
 	for (var i=0;i<3;i++) {
 		letterShift = Math.floor(Math.random()*26);
@@ -620,3 +703,23 @@ function newBot(type) {
 		return randoBot;
 	}
 }
+
+function showModal(message) {
+	document.getElementById('modalMessage').value = message;
+	document.getElementById('confirm-modal').classList = 'active';
+}
+
+function hideModal() {
+	document.getElementById('confirm-modal').classList='';
+}
+
+const confirmModal =
+`<div id="confirm-modal">
+	<div class="modal-bg"></div>
+	<div class="modal-card">
+		<textarea name='modalMessage' id='modalMessage' disabled></textarea> <br>
+		<button onclick="hideModal();startGame(game_type);">Yes</button>
+		<button onclick="hideModal();">No</button>
+	</div>
+</div>`;
+document.body.insertAdjacentHTML('afterend', confirmModal);

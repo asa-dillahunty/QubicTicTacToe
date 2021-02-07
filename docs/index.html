@@ -7,10 +7,10 @@
 		<meta charset="utf-8">
 		<title>Asa Dillahunty</title>
 		
-		<!-- <link rel="stylesheet" href="../stylesheets/template.css" type="text/css"/>
-		<link rel="stylesheet" href="../stylesheets/projectPage.css" type="text/css"/> -->
-		<link rel="stylesheet" href="../../asa-dillahunty.github.io/stylesheets/template.css" type="text/css"/>
-		<link rel="stylesheet" href="../../asa-dillahunty.github.io/stylesheets/projectPage.css" type="text/css"/>
+		<link rel="stylesheet" href="../stylesheets/template.css" type="text/css"/>
+		<link rel="stylesheet" href="../stylesheets/projectPage.css" type="text/css"/>
+		<!-- <link rel="stylesheet" href="../../asa-dillahunty.github.io/stylesheets/template.css" type="text/css"/>
+		<link rel="stylesheet" href="../../asa-dillahunty.github.io/stylesheets/projectPage.css" type="text/css"/> -->
 		<link rel="stylesheet" href="stylesheets/qubic.css" type="text/css"/>
 	</head>
 
@@ -104,10 +104,6 @@
 			<button type="button" onclick="startGame('watch')">Watch a Game</button>
 		</div>
 
-		<section id='userDetails' style="display:none;">
-			
-		</section>
-
 		<section id='onlineOptions' style="display:none;">
 			<button type='button' onclick="onlineHandler('join')">Join a Game</button>
 			<button type='button' onclick="onlineHandler('host')">Host a Game</button>
@@ -118,9 +114,10 @@
 		<!-- <section id='GameDetails'> -->
 			<label for="opponentName">Opponent: </label>
 			<input type="text" name='opponentName' id='opponentName' value="?" maxlength="15" disabled>
+			<input type="text" name='opponentReady' id='opponentReady' value="Not Ready" disabled>
 			<br>
 
-			<label for="userName">Your Name</label>
+			<label for="userName">User Name:</label>
 			<input type="text" name='userName' id='userName' value="" maxlength="15">
 			<label for="userColor">Color</label>
 			<input type="color" name='userColor' id='userColor'>
