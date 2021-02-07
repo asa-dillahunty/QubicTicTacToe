@@ -1,10 +1,28 @@
 var game_status = 'not started';
+var game_type;
 var gameBoard;
 var turn;
 var turnCount;
 var players;
 var bot = null;
 var interval = null;
+var onlineGameDataStream;
+var onlineGameData;
+var userData = {host:null,name:null,color:null};
+document.getElementById('userName').addEventListener('change', function() {
+	userData.name = document.getElementById('userName').value;
+});
+document.getElementById('userColor').addEventListener('change', function() {
+	userData.color = document.getElementById('userColor').value;
+	document.getElementById('userName').style.backgroundColor = userData.color;
+
+	whiteOrBlack('userName',hexToRgb(userData.color));
+});
+var opponentName = null;
+
+// document.addEventListener('keydown', function(event) {
+// 	console.log(onlineGameData);
+// });
 
 var button_background = '#DCDCAA';
 var slice_colors = ['#FFFFFF','#CCCCFF','#CCFFCC','#FFCCCC'];
@@ -14,11 +32,11 @@ function howToPlay() {
 	if (elem.style.display=='none') {
 		elem.style.display = 'inherit';
 		// gets the button and lets you know it's been selected
-		document.getElementsByClassName('game-menu')[0].children[2].style.backgroundColor = button_background;
+		document.getElementsByClassName('game-menu')[0].children[3].style.backgroundColor = button_background;
 	}
 	else {
 		elem.style.display = 'none';
-		document.getElementsByClassName('game-menu')[0].children[2].style.backgroundColor = '';
+		document.getElementsByClassName('game-menu')[0].children[3].style.backgroundColor = '';
 	}
 	
 }
@@ -29,8 +47,7 @@ function boardInit() {
 		for (var j=0;j<4;j++) {
 			for (var k=0;k<4;k++) {
 				var cell = document.getElementsByClassName("slice")[i].children[4].children[j].children[k];
-				cell.innerHTML='&nbsp;';
-				cell.classList='';
+				cell.classList='emptyCell';
 				cell.style.backgroundColor = slice_colors[i];
 			}
 		}
@@ -56,7 +73,7 @@ function makeClickable() {
 	for (var i=0;i<4;i++)
 		for (var j=0;j<4;j++)
 			for (var k=0;k<4;k++) {
-				var cell = document.getElementsByClassName("slice")[i].children[4].children[j].children[k];
+				var cell = slices[i].children[4].children[j].children[k];
 				cell.setAttribute("onClick","clickedSquare("+i+','+j+','+k+");")
 			}
 }
@@ -67,7 +84,7 @@ function makeNotClickable() {
 	for (var i=0;i<4;i++)
 		for (var j=0;j<4;j++)
 			for (var k=0;k<4;k++) {
-				var cell = document.getElementsByClassName("slice")[i].children[4].children[j].children[k];
+				var cell = slices[i].children[4].children[j].children[k];
 				cell.setAttribute("onClick","")
 			}
 }
@@ -95,10 +112,24 @@ function validMove(i,j,k) {
 	else return false;
 }
 
-function sendMove(i,j,k) {
+function sendMove(i,j,k, opponentMove=false) {
 	markCell(i,j,k,players[turn]);
 	gameBoard[i][j][k] = players[turn];
 
+	if (onlineGameData && !opponentMove) {
+		onlineGameData.lastMove = {
+			player:userData.name,
+			i:i,
+			j:j,
+			k:k,
+		}
+		if (getWinner() != 0) {
+			if (userData.host) onlineGameData.player1.ready = false;
+			else onlineGameData.player2.ready = false;
+		}
+		makeNotClickable();
+		sendDataStream();
+	}
 
 	if (getWinner() != 0) {
 		// handle winner
@@ -107,18 +138,14 @@ function sendMove(i,j,k) {
 
 		markWinner();
 		console.log(players[turn] + ' wins!')
-		game_status = 'finshed';
+		game_status = 'finished';
 		
 		setTimeout(() => {
-			if (confirm(players[turn] + ' wins!\nPlay again?')) {
-				// play again
-				if (interval != null) startGame('watch');
-				else if (bot != null) startGame('single');
-				else startGame('two');
-			}
+			showModal(`${players[turn]} wins!\nPlay again?`);
 		}, 1000);
 		return;
 	}
+	
 	turn = (turn+1)%2;
 	turnCount++;
 
@@ -126,24 +153,21 @@ function sendMove(i,j,k) {
 		if (interval != null) clearInterval(interval);
 
 		console.log('draw')
-		game_status = 'finshed';
+		game_status = 'finished';
 		
-		setTimeout(() => { 
-			if (confirm('It\'s a draw!\nPlay again?')) {
-				// play again
-				if (interval !=null) startGame('watch');
-				else if (bot != null) startGame('single');
-				else startGame('two');
-			}
+		setTimeout(() => {
+			showModal('It\'s a draw!\nPlay again?');
+			// if (confirm('It\'s a draw!\nPlay again?')) {
+			// 	// play again
+			// 	startGame(game_type);
+			// }
 		}, 1000);
 	}
 }
 
 function markCell(i,j,k,mark) {
 	var cell = document.getElementsByClassName("slice")[i].children[4].children[j].children[k];
-
-	cell.innerHTML = mark;
-	cell.classList += mark;
+	cell.classList = mark;
 }
 
 function markWinner() {
@@ -152,24 +176,24 @@ function markWinner() {
 			for (var k=0;k<4;k++)
 				for(var dx=-1;dx<=1;dx++)
 					for(var dy=-1;dy<=1;dy++)
-						for(var dz=-1;dz<=1;dz++)
-						{
+						for(var dz=-1;dz<=1;dz++) {
 							if (dx==0 && dy==0 && dz==0) continue;
 							if (i+dx*3 > 3 || i+dx*3 < 0) continue;
 							if (j+dy*3 > 3 || j+dy*3 < 0) continue;
 							if (k+dz*3 > 3 || k+dz*3 < 0) continue;
-								if(gameBoard[i][j][k]!=' ' && 
-									gameBoard[i][j][k]==gameBoard[i+dx][j+dy][k+dz] && 
-									gameBoard[i][j][k]==gameBoard[i+2*dx][j+2*dy][k+2*dz] && 
-									gameBoard[i][j][k]==gameBoard[i+3*dx][j+3*dy][k+3*dz]) {
 
-										document.getElementsByClassName("slice")[i].children[4].children[j].children[k].classList+=' winning-move';
-										document.getElementsByClassName("slice")[i+dx].children[4].children[j+dy].children[k+dz].classList+=' winning-move';
-										document.getElementsByClassName("slice")[i+dx*2].children[4].children[j+dy*2].children[k+dz*2].classList+=' winning-move';
-										document.getElementsByClassName("slice")[i+dx*3].children[4].children[j+dy*3].children[k+dz*3].classList+=' winning-move';
+							if(gameBoard[i][j][k]!=' ' && 
+								gameBoard[i][j][k]==gameBoard[i+dx][j+dy][k+dz] && 
+								gameBoard[i][j][k]==gameBoard[i+2*dx][j+2*dy][k+2*dz] && 
+								gameBoard[i][j][k]==gameBoard[i+3*dx][j+3*dy][k+3*dz]) {
 
-										return gameBoard[i][j][k];
-									}
+									document.getElementsByClassName("slice")[i].children[4].children[j].children[k].classList+=' winning-move';
+									document.getElementsByClassName("slice")[i+dx].children[4].children[j+dy].children[k+dz].classList+=' winning-move';
+									document.getElementsByClassName("slice")[i+dx*2].children[4].children[j+dy*2].children[k+dz*2].classList+=' winning-move';
+									document.getElementsByClassName("slice")[i+dx*3].children[4].children[j+dy*3].children[k+dz*3].classList+=' winning-move';
+
+									return gameBoard[i][j][k];
+								}
 
 						}
 	return 0;
@@ -203,40 +227,150 @@ function startGame(type) {
 	// if bot alive, kill it >:)
 	if (interval != null) clearInterval(interval);
 
+	makeNotClickable();
+
 	// hide buttons
-	document.getElementsByClassName('cantine')[0].style.display='none';
-	document.getElementsByClassName('how-to-play')[0].style.display='none';
+	document.getElementById('canteen').style.display='none';
+	// document.getElementsByClassName('how-to-play')[0].style.display='none';
 	document.getElementsByClassName('game-menu')[0].style.display='inherit';
+	document.getElementsByClassName("board")[0].style.display = "inline-flex";
 
 	game_status = 'in progress';
+	game_type = type;
 	gameBoard = boardInit();
 	players = ['X','O'];
 	turn = 0;
 	turnCount = 0;
-	makeClickable();
 
-	for (var btn = 0;btn<4;btn++) {
+	var menuButtonList = document.getElementsByClassName('game-menu')[0].children;
+	for (var btn = 0;btn<menuButtonList.length;btn++) {
 		document.getElementsByClassName('game-menu')[0].children[btn].style.backgroundColor = '';
 	}
 	
 	if (type == 'single') {
+		makeClickable();
 		document.getElementsByClassName('game-menu')[0].children[0].style.backgroundColor = button_background;
-		document.getElementsByClassName("board")[0].style.display = "inline-flex";
 		interval = null;
 		bot = newBot('point');
 	}
 	else if (type == 'two') {
+		makeClickable();
 		document.getElementsByClassName('game-menu')[0].children[1].style.backgroundColor = button_background;
-		document.getElementsByClassName("board")[0].style.display = "inline-flex";
 		interval = null;
 		bot = null;
 	}
+	else if (type == 'online') {
+		// Join or Host?
+		if (onlineGameData) {
+			// game is currently live
+			document.getElementsByClassName('game-menu')[0].style.display='none';
+			document.getElementById('onlineOptions').style.display = 'inherit';
+			document.getElementById('GameDetails').style.display = 'inherit';
+
+			// Tell the other user I'm ready to battle to the bitter end.. again
+			if (userData.host) onlineGameData.player1.ready = true;
+			else onlineGameData.player2.ready = true;
+			onlineGameData.lastMove = null;
+			sendDataStream();
+			return;
+		}
+		// Firefox remembers game code. Not good for business
+		document.getElementById('gameCode').value = '';
+		opponentName = null;
+		document.getElementById('opponentName').value = '';
+		onlineGameData = null;
+		onlineGameDataStream = null;
+		userData.name = document.getElementById('userName').value;
+		userData.color = document.getElementById('userColor').value;
+		document.getElementById('userName').style.backgroundColor = userData.color;
+		whiteOrBlack('userName',hexToRgb(userData.color));
+
+		document.getElementsByClassName('game-menu')[0].style.display='none';
+		document.getElementById('onlineOptions').style.display = 'inherit';
+		document.getElementById('GameDetails').style.display = 'inherit';
+		// document.getElementById('GameDetails').style.display = 'inherit';
+	}
 	else if (type == 'watch') {
-		document.getElementsByClassName('game-menu')[0].children[3].style.backgroundColor = button_background;
-		makeNotClickable();
+		document.getElementsByClassName('game-menu')[0].children[4].style.backgroundColor = button_background;
 		bot = newBot('point');
 		watchGame();
 	}
+}
+
+function onlineHandler(selection) {
+	switch (selection) {
+		case 'join':
+			// Make sure user details is finished
+
+			// Check if code is entered
+			var gameCode = document.getElementById('gameCode').value;
+			if (gameCode.length == 3) {
+				if (document.getElementById('userName').value.length < 1) {
+					alert('You must enter a name');
+					break;
+				}
+				setAbles(true);
+				dataStreamInit(gameCode);
+			} else {
+				alert('You must enter the game code');
+			}
+			userData.host = false;
+			break;
+		case 'host':
+			if (document.getElementById('userName').value.length < 1) {
+				alert('You must enter a name');
+				break;
+			}
+			
+			var gameCode = generateGameCode();
+			dataStreamInit(gameCode);
+			userData.host = true;
+
+			onlineGameData = {
+				player1: {
+					name:userData.name,
+					color:document.getElementById('userColor').value,
+					ready:true
+				},
+				player2: null,
+				gameID: gameCode,
+				lastMove: null
+			};
+
+			document.getElementById('gameCode').value = gameCode
+			setAbles(true);
+			document.getElementById('GameDetails').style.display = 'inherit';
+
+			sendDataStream();
+
+
+			break;
+		case 'cancel':
+			document.getElementById('canteen').style.display='inherit';
+			document.getElementsByClassName('game-menu')[0].style.display='none';
+			document.getElementsByClassName("board")[0].style.display = "none";
+			document.getElementById('GameDetails').style.display = 'none';
+			document.getElementById('gameCode').disabled = false;
+			document.getElementById('onlineOptions').style.display = 'none';
+			killOnline();
+			break;
+		default:
+			// default will also cancel because something went wrong
+
+	}
+}
+
+function setAbles(isDisabled) {
+	document.getElementById('gameCode').disabled = isDisabled;
+	document.getElementById('userName').disabled = isDisabled;
+	document.getElementById('userColor').disabled = isDisabled;
+}
+
+function whiteOrBlack(elemID,colorRGB) {
+	if (contrast([colorRGB.r,colorRGB.g,colorRGB.b],[0,0,0]) 
+		< contrast([colorRGB.r,colorRGB.g,colorRGB.b],[255,255,255])) {
+			document.getElementById(elemID).style.color = '#ffffff';
+	} else document.getElementById(elemID).style.color = '#000000';
 }
 
 function watchGame() {
@@ -246,6 +380,179 @@ function watchGame() {
 		if (move != 0 && validMove(move[0],move[1],move[2])) 
 			sendMove(move[0],move[1],move[2]);
 	}, 1000);
+}
+
+/* FIREBASE Stuff */
+function dataStreamInit(gameCode) {
+
+	gameCode = gameCode.toUpperCase();
+	var database=firebase.database();
+
+	onlineGameDataStream = database.ref(`games/${gameCode}`);
+
+	onlineGameDataStream.on('value',(snapshot) => {
+		const data = snapshot.val();
+		if (data == null) {
+			alert('Connection not found');
+			setAbles(false);
+			startGame(game_type);
+			return;
+		}
+		onlineGameData = data;
+		// console.log("Received Data");
+		dataStreamHandler();		
+	});
+}
+
+function sendDataStream() {
+	onlineGameDataStream.set(onlineGameData);
+}
+
+function dataStreamHandler() {
+	if (onlineGameData.player1 && onlineGameData.player2) {
+		var myReady = document.getElementById('opponentReady');
+		// set the  readies
+		if  (userData.host) {
+			if (onlineGameData.player2.ready) {
+				myReady.classList = 'ready';
+				myReady.value = 'Ready';
+			} else {
+				myReady.classList = '';
+				myReady.value = 'Not Ready';
+			}
+		} else {
+			if (onlineGameData.player2.ready) {
+				myReady.classList = 'ready';
+				myReady.value = 'Ready';
+			} else {
+				myReady.classList = '';
+				myReady.value = 'Not Ready';
+			}
+		}
+
+		if (!onlineGameData.player1.ready || !onlineGameData.player2.ready) makeNotClickable();
+		else if (onlineGameData.lastMove && onlineGameData.lastMove.player != userData.name) makeClickable();
+	}
+
+	if (opponentName == null && onlineGameData.player1 && onlineGameData.player2) {
+
+		if (userData.host) {
+			opponentName = onlineGameData.player2.name;
+			document.getElementById('opponentName').value = opponentName;
+			document.getElementById('opponentName').style.backgroundColor = onlineGameData.player2.color;
+			whiteOrBlack('opponentName',hexToRgb(onlineGameData.player2.color));
+		} else {
+			opponentName = onlineGameData.player1.name;
+			document.getElementById('opponentName').value = opponentName;
+			document.getElementById('opponentName').style.backgroundColor = onlineGameData.player1.color;
+			whiteOrBlack('opponentName',hexToRgb(onlineGameData.player1.color));
+		}
+	}
+
+	if (onlineGameData && !userData.host && onlineGameData.player2 == null) {
+		// If you used the same name, just add a 2
+		if (onlineGameData.player1.name == userData.name) {
+			userData.name += '2';
+			document.getElementById('userName').value = userData.name;
+		}
+		onlineGameData.player2 = {
+			name:userData.name,
+			color:document.getElementById('userColor').value,
+			ready:true
+		}
+		sendDataStream();
+		// player2 has joined the chat, and player two is you
+		// player2 goes first
+		makeClickable();
+	}
+
+	if (onlineGameData && onlineGameData.lastMove == null) {
+		if (userData.host && 
+			onlineGameData.player1 &&
+			onlineGameData.player2 &&
+			onlineGameData.player1.ready &&
+			onlineGameData.player2.ready) {
+				makeClickable();
+			}
+	}
+
+	if (onlineGameData == null ||
+		onlineGameData.lastMove == null ||
+		onlineGameData.lastMove.player == userData.name) return;
+
+
+	// if (userData.host)
+	
+
+	if (onlineGameData.lastMove) {
+		sendMove(onlineGameData.lastMove.i,onlineGameData.lastMove.j,onlineGameData.lastMove.k,true);
+		makeClickable();
+	}
+}
+
+function killOnline() {
+	// let them know we are leaving
+	if (onlineGameDataStream && onlineGameData) {
+		if (userData && userData.host && onlineGameData.player1) {
+			onlineGameData.player1.ready = false;
+			sendDataStream();
+		} else if (userData && !userData.host && onlineGameData.player2) {
+			onlineGameData.player2.ready = false;
+			sendDataStream();
+		}
+	}
+	if (onlineGameDataStream) onlineGameDataStream.off();
+	onlineGameData = null;
+	onlineGameDataStream = null;
+}
+
+function generateGameCode() {
+	const letterA = 65;
+	var gameCode = '';
+	var letterShift;
+
+	for (var i=0;i<3;i++) {
+		letterShift = Math.floor(Math.random()*26);
+		gameCode += String.fromCharCode(letterA + letterShift);
+	}
+
+	return gameCode;
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * The functions below (luminance and contrast) were posted online at
+ * https://stackoverflow.com/questions/9733288/how-to-programmatically-calculate-the-contrast-ratio-between-two-colors
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+function luminance(r, g, b) {
+	var a = [r, g, b].map(function (v) {
+		v /= 255;
+		return v <= 0.03928
+			? v / 12.92
+			: Math.pow( (v + 0.055) / 1.055, 2.4 );
+	});
+	return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+}
+function contrast(rgb1, rgb2) {
+	var lum1 = luminance(rgb1[0], rgb1[1], rgb1[2]);
+	var lum2 = luminance(rgb2[0], rgb2[1], rgb2[2]);
+	var brightest = Math.max(lum1, lum2);
+	var darkest = Math.min(lum1, lum2);
+	return (brightest + 0.05) / (darkest + 0.05);
+}
+// minimal recommended contrast ratio is 4.5, or 3 for larger font-sizes
+
+
+/* * * * * * * * * * * * * * * * * * * * * * *
+ * The functions below (hexToRgb) were posted online at
+ * https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+ * * * * * * * * * * * * * * * * * * * * * * */
+function hexToRgb(hex) {
+var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+	return result ? {
+		r: parseInt(result[1], 16),
+		g: parseInt(result[2], 16),
+		b: parseInt(result[3], 16)
+	} : null;
 }
 
 // Bot Code //
@@ -396,3 +703,23 @@ function newBot(type) {
 		return randoBot;
 	}
 }
+
+function showModal(message) {
+	document.getElementById('modalMessage').value = message;
+	document.getElementById('confirm-modal').classList = 'active';
+}
+
+function hideModal() {
+	document.getElementById('confirm-modal').classList='';
+}
+
+const confirmModal =
+`<div id="confirm-modal">
+	<div class="modal-bg"></div>
+	<div class="modal-card">
+		<textarea name='modalMessage' id='modalMessage' disabled></textarea> <br>
+		<button onclick="hideModal();startGame(game_type);">Yes</button>
+		<button onclick="hideModal();">No</button>
+	</div>
+</div>`;
+document.body.insertAdjacentHTML('afterend', confirmModal);
