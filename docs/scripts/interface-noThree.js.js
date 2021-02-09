@@ -268,9 +268,13 @@ function startGame(type) {
 			document.getElementById('GameDetails').style.display = 'inherit';
 
 			// Tell the other user I'm ready to battle to the bitter end.. again
-			if (userData.host) onlineGameData.player1.ready = true;
-			else onlineGameData.player2.ready = true;
+			if (userData.host) {
+				onlineGameData.player1.ready = true;
+				if (onlineGameData.player2.ready) makeClickable();
+			} else onlineGameData.player2.ready = true;
+
 			onlineGameData.lastMove = null;
+
 			sendDataStream();
 			return;
 		}
@@ -395,7 +399,7 @@ function dataStreamInit(gameCode) {
 		if (data == null) {
 			alert('Connection not found');
 			setAbles(false);
-			startGame(game_type);
+			// startGame(game_type);
 			return;
 		}
 		onlineGameData = data;
@@ -412,7 +416,7 @@ function dataStreamHandler() {
 	if (onlineGameData.player1 && onlineGameData.player2) {
 		var myReady = document.getElementById('opponentReady');
 		// set the  readies
-		if  (userData.host) {
+		if (userData.host) {
 			if (onlineGameData.player2.ready) {
 				myReady.classList = 'ready';
 				myReady.value = 'Ready';
@@ -430,8 +434,14 @@ function dataStreamHandler() {
 			}
 		}
 
+		// console.log(onlineGameData);
+		// console.log(!onlineGameData.player1.ready || !onlineGameData.player2.ready);
+		// console.log(onlineGameData.lastMove && onlineGameData.lastMove.player != userData.name);
+		// console.log(onlineGameData.lastMove == null && userData.host);
+		
 		if (!onlineGameData.player1.ready || !onlineGameData.player2.ready) makeNotClickable();
 		else if (onlineGameData.lastMove && onlineGameData.lastMove.player != userData.name) makeClickable();
+		else if (onlineGameData.lastMove == null && userData.host) makeClickable();
 	}
 
 	if (opponentName == null && onlineGameData.player1 && onlineGameData.player2) {
@@ -466,15 +476,15 @@ function dataStreamHandler() {
 		makeClickable();
 	}
 
-	if (onlineGameData && onlineGameData.lastMove == null) {
-		if (userData.host && 
-			onlineGameData.player1 &&
-			onlineGameData.player2 &&
-			onlineGameData.player1.ready &&
-			onlineGameData.player2.ready) {
-				makeClickable();
-			}
-	}
+	// if (onlineGameData && onlineGameData.lastMove == null) {
+	// 	if (userData.host && 
+	// 		onlineGameData.player1 &&
+	// 		onlineGameData.player2 &&
+	// 		onlineGameData.player1.ready &&
+	// 		onlineGameData.player2.ready) {
+	// 			makeClickable();
+	// 		}
+	// }
 
 	if (onlineGameData == null ||
 		onlineGameData.lastMove == null ||
