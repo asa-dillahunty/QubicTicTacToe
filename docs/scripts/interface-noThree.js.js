@@ -3,6 +3,7 @@ var game_type;
 var gameBoard;
 var turn;
 var turnCount;
+var lastPlayedCell;
 var players;
 var bot = null;
 var interval = null;
@@ -166,8 +167,11 @@ function sendMove(i,j,k, opponentMove=false) {
 }
 
 function markCell(i,j,k,mark) {
-	var cell = document.getElementsByClassName("slice")[i].children[4].children[j].children[k];
-	cell.classList = mark;
+	if (lastPlayedCell != null) {
+		lastPlayedCell.className = lastPlayedCell.className.replace(' lastMove','');
+	}
+	lastPlayedCell = document.getElementsByClassName("slice")[i].children[4].children[j].children[k];
+	lastPlayedCell.className = mark+' lastMove';
 }
 
 function markWinner() {
@@ -237,6 +241,7 @@ function startGame(type) {
 
 	game_status = 'in progress';
 	game_type = type;
+	lastPlayedCell=null;
 	gameBoard = boardInit();
 	players = ['X','O'];
 	turn = 0;

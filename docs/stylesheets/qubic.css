@@ -52,6 +52,11 @@ td:hover {
     content: "O";
 }
 
+.lastMove {
+    animation: littleFlashyFlash 1.5s linear 0s 1 forwards;
+    font-weight: bold;
+}
+
 .emptyCell::before {
     content: "\00a0";
 }
