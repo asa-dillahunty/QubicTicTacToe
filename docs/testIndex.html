@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<!-- Author: Asa Dillahunty -->
+
+<html lang='en'>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Asa Dillahunty</title>
+		
+		<link rel="stylesheet" href="../stylesheets/template.css" type="text/css"/>
+		<link rel="stylesheet" href="../stylesheets/projectPage.css" type="text/css"/>
+		<!-- <link rel="stylesheet" href="../../asa-dillahunty.github.io/stylesheets/template.css" type="text/css"/>
+		<link rel="stylesheet" href="../../asa-dillahunty.github.io/stylesheets/projectPage.css" type="text/css"/> -->
+		<link rel="stylesheet" href="stylesheets/qubic.css" type="text/css"/>
+	</head>
+
+	<body>
+		<div id="full-body">
+		<header>
+		<nav>
+			<ul>
+					<li><a href="../index.html">Home</a></li>
+					<li><a href="../projects.html">Projects</a></li>
+					<li><a href="../AsaDillahuntyResume.pdf" target="_blank">Resume</a></li>
+					<li><a href="../contact.html">Contact Me</a></li>
+			</ul>
+		</nav>
+		<h1 style="margin-bottom:0;">Qubic Tic Tac Toe</h1>
+		<small>Inspired by one of my <a href="https://github.com/asa-dillahunty/QubicTicTacToe">highschool coding projects.</a></small>
+		</header>
+
+		<main>
+
+		<div id="canteen">
+			<ul>
+				<li><button type="button" onclick="startGame('single')">Single Player</button></li>
+				<li><button type="button" onclick="startGame('two')">Multiplayer</button></li>
+				<li><button type="button" onclick="startGame('online')">Online Multiplayer</button></li>
+				<li><button type="button" onclick="howToPlay()">How to Play</button></li>
+				<li><button type="button" onclick="startGame('watch')">Watch a Game</button></li>
+			</ul>
+		</div>
+
+		<div class="board" style="display: none;">
+		<table class="slice">
+			<colgroup> <col span="1"> </colgroup>
+			<colgroup> <col span="1"> </colgroup>
+			<colgroup> <col span="1"> </colgroup>
+			<colgroup> <col span="1"> </colgroup>
+
+			<tbody>
+				<tr><td></td><td></td><td></td><td></td></tr>
+				<tr><td></td><td></td><td></td><td></td></tr>
+				<tr><td></td><td></td><td></td><td></td></tr>
+				<tr><td></td><td></td><td></td><td></td></tr>
+			</tbody>
+		</table>
+		<table class="slice">
+			<colgroup> <col span="1"> </colgroup>
+			<colgroup> <col span="1"> </colgroup>
+			<colgroup> <col span="1"> </colgroup>
+			<colgroup> <col span="1"> </colgroup>
+
+			<tbody>
+				<tr><td></td><td></td><td></td><td></td></tr>
+				<tr><td></td><td></td><td></td><td></td></tr>
+				<tr><td></td><td></td><td></td><td></td></tr>
+				<tr><td></td><td></td><td></td><td></td></tr>
+			</tbody>
+		</table>
+		<table class="slice">
+			<colgroup> <col span="1"> </colgroup>
+			<colgroup> <col span="1"> </colgroup>
+			<colgroup> <col span="1"> </colgroup>
+			<colgroup> <col span="1"> </colgroup>
+
+			<tbody>
+				<tr><td></td><td></td><td></td><td></td></tr>
+				<tr><td></td><td></td><td></td><td></td></tr>
+				<tr><td></td><td></td><td></td><td></td></tr>
+				<tr><td></td><td></td><td></td><td></td></tr>
+			</tbody>
+		</table>
+		<table class="slice">
+			<colgroup> <col span="1"> </colgroup>
+			<colgroup> <col span="1"> </colgroup>
+			<colgroup> <col span="1"> </colgroup>
+			<colgroup> <col span="1"> </colgroup>
+
+			<tbody>
+				<tr><td></td><td></td><td></td><td></td></tr>
+				<tr><td></td><td></td><td></td><td></td></tr>
+				<tr><td></td><td></td><td></td><td></td></tr>
+				<tr><td></td><td></td><td></td><td></td></tr>
+			</tbody>
+		</table>
+		</div>
+
+		<div id="game-menu" class="game-menu">
+			<button type="button" onclick="startGame('single')">Single Player</button>
+			<button type="button" onclick="startGame('two')">Multiplayer</button>
+			<button type="button" onclick="startGame('online')">Online Multiplayer</button>
+			<button type="button" onclick="howToPlay()">How to Play</button>
+			<button type="button" onclick="startGame('watch')">Watch a Game</button>
+		</div>
+
+		<section id='userDetails' style="display:none;">
+			
+		</section>
+
+		<section id='onlineOptions' style="display:none;">
+			<button type='button' onclick="onlineHandler('join')">Join a Game</button>
+			<button type='button' onclick="onlineHandler('host')">Host a Game</button>
+			<button type='button' onclick="onlineHandler('cancel')">Cancel</button> 
+		</section>
+
+		<section id='GameDetails' style="display:none;">
+			<!-- <section id='GameDetails'> -->
+			<label for="opponentName">Opponent: </label>
+			<input type="text" name='opponentName' id='opponentName' value="?" maxlength="15" disabled>
+			<input type="text" name='opponentReady' id='opponentReady' value="Not Ready" disabled>
+			<br>
+
+			<label for="userName">User Name:</label>
+			<input type="text" name='userName' id='userName' value="" maxlength="15">
+			<label for="userColor">Color</label>
+			<input type="color" name='userColor' id='userColor'>
+			<br>
+				
+			<label for="gameCode">Game Code</label>
+			<input type="text" name='gameCode' id='gameCode' value="" maxlength="3">
+		</section>
+
+		<section class="how-to-play" style="display: none;">
+		<h2>How to Play</h2>
+		<p>
+			This is a standard game of tic tac toe, but you have to get four in a row, and it's in 3D. Connecting four in a row can be done horizontally on or through planes, vertically on or through planes, or diagonally on or through planes, or some combination. Visually it can be difficult to see, but writing out the coordinates can be helpful.
+		</p>
+		<p>
+			Players take turns placing either an X or an O within the cube attempting to get four in a row.
+			The Player interface consists of four 'boards,' each representing a 'slice' of the cube as displayed below.
+		</p>
+		<img src="images/Controls.png" alt=""/>
+		<p>
+			Games can be won by connecting four in a row horizontally across a board, vertically, or diagonally.
+			Connecting four in a row across multiple slices is allowed too.
+		</p>
+		<ul class="exampleImages">
+			<li>
+				<figure>
+					<img src="images/QubicWinHorizontal.png" alt="Horizontal Win"/>
+					<figcaption>Valid Horizontal Win</figcaption>
+				</figure>
+			</li>
+			<li>
+				<figure>
+					<img src="images/QubicWinVertical.png" alt="Vertical Win"/>
+					<figcaption>Valid Vertical Win</figcaption>
+				</figure>
+			</li>
+			<li>
+				<figure>
+					<img src="images/QubicWinDiagonal.png" alt="Diagonal Win"/>
+					<figcaption>Valid Diagonal Win</figcaption>
+				</figure>
+			</li>
+		</ul>
+		<p>
+			If you notice any bugs or issues with the game, please reach out to me or open an issue on GitHub. Also, single player currently has only one difficulty, and it's hard. Good luck :)
+		</p>
+		</section>
+		</main>
+
+		<footer>
+			<a href="https://github.com/asa-dillahunty" target="_blank">
+				<img src="https://simpleicons.org/icons/github.svg" alt="GitHub"/></a>
+			
+			<a href="https://www.linkedin.com/in/asa-dillahunty" target="_blank">
+				<img src="https://simpleicons.org/icons/linkedin.svg" alt="LinkedIn"/></a>
+				
+			<a href="mailto:asdillahunty@crimson.ua.edu" target="_blank">
+				<img src="https://simpleicons.org/icons/gmail.svg" alt="E-mail"/></a>
+
+			<br/>
+			&#169; 2020 Asa Dillahunty. All rights reserved <br/>
+		</footer>
+		</div>
+	</body>
+
+	<!-- The core Firebase JS SDK is always required and must be listed first -->
+	<script src="https://www.gstatic.com/firebasejs/8.2.5/firebase-app.js"></script>
+
+	<!-- TODO: Add SDKs for Firebase products that you want to use
+		https://firebase.google.com/docs/web/setup#available-libraries -->
+	<script src="https://www.gstatic.com/firebasejs/8.2.5/firebase-analytics.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.2.5/firebase-database.js"></script>
+
+	<script type="text/javascript" src="scripts/firebase-init.js"></script>
+	<script type="text/javascript" src="scripts/onlineLogic.js"></script>
+
+	<script type='text/javascript' src="scripts/botLogic.js"></script>
+	<script type='text/javascript' src="scripts/gameLogic.js"></script>
+	<script type='text/javascript' src="scripts/Threejs/Three.js"></script>
+	<script type='text/javascript' src="scripts/Threejs/OrbitalControls.js"></script>
+	
+	<!-- <script type='text/javascript' src="scripts/interface.js"></script> -->
+	<script type='text/javascript' src="scripts/threejsLogic.js"></script>
+	<script src="../scripts/nav.js"></script>
+</html>

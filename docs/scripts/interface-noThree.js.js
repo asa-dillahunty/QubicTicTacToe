@@ -249,18 +249,18 @@ function startGame(type) {
 
 	var menuButtonList = document.getElementsByClassName('game-menu')[0].children;
 	for (var btn = 0;btn<menuButtonList.length;btn++) {
-		document.getElementsByClassName('game-menu')[0].children[btn].style.backgroundColor = '';
+		menuButtonList[btn].style.backgroundColor = '';
 	}
 	
 	if (type == 'single') {
 		makeClickable();
-		document.getElementsByClassName('game-menu')[0].children[0].style.backgroundColor = button_background;
+		menuButtonList[0].style.backgroundColor = button_background;
 		interval = null;
 		bot = newBot('point');
 	}
 	else if (type == 'two') {
 		makeClickable();
-		document.getElementsByClassName('game-menu')[0].children[1].style.backgroundColor = button_background;
+		menuButtonList[1].style.backgroundColor = button_background;
 		interval = null;
 		bot = null;
 	}

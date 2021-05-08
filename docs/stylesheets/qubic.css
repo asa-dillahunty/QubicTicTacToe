@@ -174,3 +174,8 @@ input[type=text] {
     text-align: center;
     height: 100px;
 }
+
+canvas {
+    margin: auto;
+    margin-top: 3rem;
+}

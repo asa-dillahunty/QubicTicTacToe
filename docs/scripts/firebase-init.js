@@ -15,4 +15,6 @@ firebase.initializeApp(firebaseConfig);
 firebase.analytics();
 
 
-// I'm trusting this information won't be abused, so I don't have to add authentication
+// I'm trusting this information won't be abused
+//		if it is abused, would adding authentication help?
+//		I need to learn how to add rules on the firebase website to limit what kind of data can be added.

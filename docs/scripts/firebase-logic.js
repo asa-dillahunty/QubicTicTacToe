@@ -1,7 +1,7 @@
 function joinGame() {
 	var gameCode = document.getElementById("gameCode").value.toUpperCase();
 	console.log(gameCode);
-	hide('cantine');
+	// hide('canteen');
 	show('GameDetails');
 }
 

@@ -210,7 +210,7 @@ function startGame(type) {
 	if (interval != null) clearInterval(interval);
 
 	// hide buttons
-	document.getElementsByClassName('cantine')[0].style.display='none';
+	document.getElementById('canteen').style.display='none';
 	document.getElementsByClassName('how-to-play')[0].style.display='none';
 	document.getElementsByClassName('game-menu')[0].style.display='inherit';
 
@@ -220,7 +220,7 @@ function startGame(type) {
 	turn = 0;
 	turnCount = 0;
 	makeClickable();
-	document.getElementById('canned-goods').children[0].style.display='inherit';
+	document.getElementById('game-menu').children[0].style.display='inherit';
 
 	for (var btn = 0;btn<4;btn++) {
 		document.getElementsByClassName('game-menu')[0].children[btn].style.backgroundColor = '';
@@ -442,46 +442,46 @@ var renderer = new THREE.WebGLRenderer();
 // renderer.setClearColor( 0xffffff, 0);
 
 renderer.setSize(window.innerWidth, window.innerHeight);
-document.getElementById('canned-goods').appendChild(renderer.domElement);
+document.getElementById('game-menu').appendChild(renderer.domElement);
 
 if (window.innerWidth > window.innerHeight) {
-	document.getElementById('canned-goods').children[0].style.width='100%';
+	document.getElementById('game-menu').children[0].style.width='100%';
 	// calculate height
 	var newHeight = ((window.innerHeight * 1)/window.innerWidth) * 100;
 	var newH = newHeight + '%';
-	document.getElementById('canned-goods').children[0].style.height=newH;
+	document.getElementById('game-menu').children[0].style.height=newH;
 }
 else {
-	document.getElementById('canned-goods').children[0].style.height='100%';
+	document.getElementById('game-menu').children[0].style.height='100%';
 	// calculate height
 	var newWidth = ((window.innerWidth * 1)/window.innerHeight) * 100;
 	var newW = newWidth + '%';
-	document.getElementById('canned-goods').children[0].style.width=newW;
+	document.getElementById('game-menu').children[0].style.width=newW;
 }
 
-document.getElementById('canned-goods').children[0].style.margin = 'auto';
-document.getElementById('canned-goods').children[0].style.marginTop = '3rem';
-document.getElementById('canned-goods').children[0].style.display='none';
+document.getElementById('game-menu').children[0].style.margin = 'auto';
+document.getElementById('game-menu').children[0].style.marginTop = '3rem';
+document.getElementById('game-menu').children[0].style.display='none';
 
 // document.body.appendChild(renderer.domElement);
 
 window.addEventListener('resize', function() {
 	renderer.setSize(window.innerWidth,window.innerHeight);
 	camera.aspect = window.innerWidth / window.innerHeight;
-	document.getElementById('canned-goods').children[0].style.width='100%';
+	document.getElementById('game-menu').children[0].style.width='100%';
 	if (window.innerWidth > window.innerHeight) {
-		document.getElementById('canned-goods').children[0].style.width='100%';
+		document.getElementById('game-menu').children[0].style.width='100%';
 		// calculate height
 		var newHeight = ((window.innerHeight * 1)/window.innerWidth) * 100;
 		var newH = newHeight + '%';
-		document.getElementById('canned-goods').children[0].style.height=newH;
+		document.getElementById('game-menu').children[0].style.height=newH;
 	}
 	else {
-		document.getElementById('canned-goods').children[0].style.height='100%';
+		document.getElementById('game-menu').children[0].style.height='100%';
 		// calculate height
 		var newWidth = ((window.innerWidth * 1)/window.innerHeight) * 100;
 		var newW = newWidth + '%';
-		document.getElementById('canned-goods').children[0].style.width=newW;
+		document.getElementById('game-menu').children[0].style.width=newW;
 	}
 	camera.updateProjectionMatrix();
 });

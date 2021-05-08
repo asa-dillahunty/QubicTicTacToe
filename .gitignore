@@ -1,3 +1,7 @@
 *.class
 .DS_Store
 *.log
+
+# copied css sheets for local testing
+docs/stylesheets/projectPage.css
+docs/stylesheets/template.css
