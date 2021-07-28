@@ -17,11 +17,11 @@ function howToPlay() {
 	if (elem.style.display=='none') {
 		elem.style.display = 'inherit';
 		// gets the button and lets you know it's been selected
-		document.getElementById("game-menu").children[2].style.backgroundColor = button_background;
+		document.getElementById("game-menu").children[3].style.backgroundColor = button_background;
 	}
 	else {
 		elem.style.display = 'none';
-		document.getElementById("game-menu").children[2].style.backgroundColor = '';
+		document.getElementById("game-menu").children[3].style.backgroundColor = '';
 	}
 	
 }
