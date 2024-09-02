@@ -465,31 +465,7 @@ document.getElementById('game-menu').children[0].style.display='none';
 
 // document.body.appendChild(renderer.domElement);
 
-window.addEventListener('resize', function() {
-	renderer.setSize(window.innerWidth,window.innerHeight);
-	camera.aspect = window.innerWidth / window.innerHeight;
-	document.getElementById('game-menu').children[0].style.width='100%';
-	if (window.innerWidth > window.innerHeight) {
-		document.getElementById('game-menu').children[0].style.width='100%';
-		// calculate height
-		var newHeight = ((window.innerHeight * 1)/window.innerWidth) * 100;
-		var newH = newHeight + '%';
-		document.getElementById('game-menu').children[0].style.height=newH;
-	}
-	else {
-		document.getElementById('game-menu').children[0].style.height='100%';
-		// calculate height
-		var newWidth = ((window.innerWidth * 1)/window.innerHeight) * 100;
-		var newW = newWidth + '%';
-		document.getElementById('game-menu').children[0].style.width=newW;
-	}
-	camera.updateProjectionMatrix();
-});
-
 controls = new THREE.OrbitControls(camera,renderer.domElement);
-
-const CUBE_SIZE = 200;
-const CUBE_COLOR = 0x888888;
 
 // make the cubes
 var cubeBoard = [];
