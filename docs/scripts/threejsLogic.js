@@ -246,19 +246,28 @@ function clearThreejsBoard() {
 	// Clears Three.js Board
 	for (var i=0;i<4;i++)
 		for (var j=0;j<4;j++)
-			for (var k=0;k<4;k++)
-				cubeBoard[i][j][k].material = new THREE.MeshBasicMaterial({color: slice_colors[3-i], wireframe: true});
+			for (var k=0;k<4;k++) {
+				while (cubeBoard[i][j][k].children.length > 0) {
+					cubeBoard[i][j][k].remove(cubeBoard[i][j][k].children[0]);
+					sphereBoard[i][j][k].remove(sphereBoard[i][j][k].children[0]);
+				}
+				const cubeGeometry = new THREE.BoxGeometry(CUBE_SIZE, CUBE_SIZE, CUBE_SIZE, 1, 1, 1);
+				const cubeMaterial = new THREE.MeshBasicMaterial({color: slice_colors[3-i], wireframe: true});
+				const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+				cubeBoard[i][j][k].add(cube);
+			}
+				// cubeBoard[i][j][k].material = new THREE.MeshBasicMaterial({color: slice_colors[3-i], wireframe: true});
 }
 
-function markThreejsBoard(i,j,k) {
-	// mark Three.js Board
-	// this throws warnings of deprecation. Cannot be avoided. 
-	// Attach X and O shapes to faces of the cube
-	if (players[turn] == 'X')
-		cubeBoard[3-i][3-j][k].material = THREE.MeshFaceMaterial(xCubeMaterials);
-	else if (players[turn] == 'O')
-		cubeBoard[3-i][3-j][k].material = THREE.MeshFaceMaterial(oCubeMaterials);
-}
+// function markThreejsBoard(i,j,k) {
+// 	// mark Three.js Board
+// 	// this throws warnings of deprecation. Cannot be avoided. 
+// 	// Attach X and O shapes to faces of the cube
+// 	if (players[turn] == 'X')
+// 		cubeBoard[3-i][3-j][k].material = THREE.MeshFaceMaterial(xCubeMaterials);
+// 	else if (players[turn] == 'O')
+// 		cubeBoard[3-i][3-j][k].material = THREE.MeshFaceMaterial(oCubeMaterials);
+// }
 
 const textSize = 200;
 const textDepth = 80;
